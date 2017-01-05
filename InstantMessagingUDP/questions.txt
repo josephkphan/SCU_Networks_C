@@ -1,0 +1,45 @@
+Questions to Answer:
+
+
+What does it mean that recvfrom() is a blocking function?
+	This means that the process will go to sleep until the system tells it to wake up and execute the function call. In other words, the program will get "stuck" at that program line until it is actually executed.	
+
+How would you implement a program that allows both the client and server to send and receive messages? So first the client would send, the server would receive. Then the server would send and the client would receive and so on. Don't need to actually implement, pseudocode is fine.
+	both sides would alternate between receiving and sending it message. For example:
+
+//After the connection is already set up
+//On client side
+while(true){
+	scanf input;
+	send input
+	if(input = quit) 
+		break
+	revfrom server
+	if( server message == quit)
+		break
+}
+
+//On server side
+while(true){
+	revfrom client
+	if( server message == quit)
+		break
+	scanf input
+	send input
+	if( input == quit)
+		break
+}
+	This will allow client and server to messages to each other, alternating who is sending and receiving and will end the process when either one sends a message with quit.
+
+How does getaddrinfo() or gethostbyname() resolve the correct address? Hint: What Linux file are hosts stored in?
+	it looks in the linux system for the files  /etc/host.conf and /etc/nsswitch.conf.
+	cite: http://stackoverflow.com/questions/20284094/how-gethostbyname-or-getnameinfo-work-in-background		
+
+What is the loopback address?
+	A loopback address is the same thing as "localhost". It is 127.0.0.1. It allows programs to connect to servers on the same machine even if wifi / ethernet is down.
+
+How can you tell if the server has closed its connection?
+	You check whether the port is open or not by using 
+		netstat -lntu		cite : http://superuser.com/questions/529830/get-a-list-of-open-ports-in-linux
+		or # netstat --listen  cite : http://www.cyberciti.biz/faq/how-do-i-find-out-what-ports-are-listeningopen-on-my-linuxfreebsd-server/
+	if the connection is closed, the port should be open.

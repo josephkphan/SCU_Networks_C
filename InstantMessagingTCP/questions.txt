@@ -1,0 +1,11 @@
+What is the amount of extra overhead per packet now sent? In other words, how much extra data (in bytes) did we add to the packet?
+	We added two ints, a sequence and a checksum, therefore there is an additional 16 bytes (8 bytes per each int).	
+
+If the current sequence number is 5, what should your sequence number be if the server received the incorrect checksum? What should it be if your server received the correct checksum
+	it should still be 5 and the client should resend the same message. If the server received the correct checksum, it will increment the sequence number to 6 and request that one back from the client. 	
+
+How could we ensure the packets were delivered to the application in the correct order while allowing the client to not be blocked by a recvfrom call? (No code, just ideas).
+		The Server can have a buffer to hold multiple packets at once. This way, it can receive messages out of order.
+
+What are some other ways to check the correctness of packets?
+	We can use methods such as CRC or Two Dimentional Parity to check our packets. 

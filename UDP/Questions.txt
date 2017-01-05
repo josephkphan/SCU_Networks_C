@@ -1,0 +1,16 @@
+Questions to answers:
+
+Describe UDP in your own words
+	UDP is a protocol that does not ensure the transfer of a packet. UDP is used for speed rather than for a guarenteed delivery. UDP will catch some packets that is sent over but not necessarily all of them and it does not care if it does not catch a packet.
+
+What does the bind function do? Do we need it on the client?
+	we use bind when we want to create a server socket. It basically claims a port that we want to listen from. We do not need it on the client
+
+In your own words, describe what a socket it
+	A socket is a connection link between two programs. A socket is the channel that packets transfer through.
+
+Describe the purpose of each field in the sockaddr_in struct
+	sinFamily is the type of family or addeses being used
+	Sin_Port takes in a port number which is liek an address of the server. The server and client port numbers must match so they can communicate wih each other
+	Sin_Address is the internet address 
+	Sin Zero is only used for padding to make it the same size as struct sock addr

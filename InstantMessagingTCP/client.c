@@ -1,0 +1,143 @@
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdbool.h>
+
+#define PORTNUM 9009
+#define BUFFERSIZE 512
+#define NAMESIZE 64
+
+//client.c
+
+bool checkQuit(char buffer[]){
+	int len, i;
+	char tmp[5];
+	len =strlen(buffer);
+	if(len>=4){
+		strncpy(tmp,buffer, 4);
+		tmp[4]='\0';
+
+		for(i = 0; i<strlen(tmp); i++){
+			tmp[i] = tolower(tmp[i]);
+		}
+		if(strcmp(tmp,"quit")==0)
+			return true;			
+	}
+	return false;
+}
+
+typedef struct Packets {
+	int seq; 						//sequence number
+	char str[BUFFERSIZE]; 			//message 
+	int checksum; 					//checksum flag
+} Packet;	
+
+int main(int argc, const char* argv[]) {
+	int corrupted = 0;
+	//setup Socket
+	struct hostent *server; 
+	struct sockaddr_in si_server; 
+	server = gethostbyname(argv[1]); 
+	bzero((char*) &si_server, sizeof(si_server)); 
+	si_server.sin_family = AF_INET; 
+	bcopy((char*)server->h_addr, (char*)&si_server.sin_addr,server->h_length); 
+	si_server.sin_port=htons(PORTNUM); 
+	int sockfd=socket(PF_INET, SOCK_DGRAM, 0); 
+	
+	
+	char name[NAMESIZE] = "Client";					//declare name size
+	char serverName[NAMESIZE];						//declare other username
+	char buffer[BUFFERSIZE];						//declare message size
+	socklen_t tolen = sizeof(si_server); 			//size of server
+
+	int sendValue,y,z; 								//placeholder for sendto's and recvfrom's
+	int seqCount = 1; 								//sequence number
+	int checksumFlag = 17; 							//hardcoded flag
+	Packet* myPacket = malloc(sizeof(Packet)); 
+	Packet* serverPacket = malloc(sizeof(Packet));
+
+	int numMessages = 5;							//send up to 5 messages
+
+
+
+	//Will send a message and wait for server to send something back
+	while(seqCount <= numMessages) { 		
+
+		//Gets a new line and checks whether or not user wants to quit
+		printf("Enter message: "); 
+		bzero(buffer, BUFFERSIZE);					//clears out buffer
+		fgets(buffer, BUFFERSIZE, stdin);
+
+
+		//if the user quits, send a message quit to server
+		if( checkQuit(buffer) ) {
+			break;
+		}
+
+
+		//Sends client name then actual message
+		sendValue = sendto(sockfd, name, NAMESIZE, 0, (struct sockaddr*) &si_server, tolen);
+		printf("server is expecting sequence: %i\n",seqCount);
+
+		//Takes input and creates the packet and sends the packet to server
+		strcpy(myPacket->str, buffer); 
+		myPacket->seq = seqCount; 
+		myPacket->checksum = checksumFlag; 
+		if( seqCount == 3 && corrupted == 0){	
+			printf("\nCORRUPTING CHECKSUM NOW\n\n");
+			corrupted = 1;
+			myPacket->checksum = checksumFlag + 10; 	
+		}	
+		sendto(sockfd, myPacket, sizeof(Packet), 0, (struct sockaddr*) &si_server, tolen); 
+
+		
+		
+		//After sending the message, Client will wait for an acknowledgement
+		if(sendValue != -1) {
+			puts("Message sent. Waiting for response....");
+		}
+		bzero(buffer, BUFFERSIZE);					//clears our buffer 
+		 
+		/* Acknowledgements include: 2 recv
+		 * 1) Server Name for printing purposes
+         * 2) a repeat of the message to check for CheckSum and sequence 
+	     */
+
+		//Receives Name
+		y = recvfrom(sockfd, serverName, NAMESIZE, 0, (struct sockaddr*) &si_server, &tolen);
+		if(checkQuit(serverName)) { break;} 		//check if server quit
+
+		//Receives repeated message
+		z = recvfrom(sockfd, serverPacket, sizeof(Packet), 0, (struct sockaddr*) &si_server, &tolen);
+		
+		//Checks checkSum algorithm
+		char *pos;
+		if ((pos=strchr(serverName, '\n')) != NULL) //remove /n from string
+		    *pos = '\0';
+		
+		if(serverPacket->checksum == 17) { 						//checksum algorithm
+			printf("\n%s: %s", serverName, serverPacket->str);	//print username&message
+			seqCount = serverPacket->seq;						//update sequence number
+		}
+		else {
+			printf("wrong Checksum Please retype your message\n\n"); //if wrong checksum
+		}
+
+	}
+
+	sendValue = sendto(sockfd, "quit", NAMESIZE, 0, (struct sockaddr*) &si_server, tolen);
+	close(sockfd);
+	return 0;
+}
+
+
+
+
+
+
